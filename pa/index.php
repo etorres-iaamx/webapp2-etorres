@@ -46,18 +46,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Se alcanzó el límite temporal de intentos. Intenta más tarde.';
             } else {
                 $runtime = agent_runtime();
-                $insert = $pdo->prepare('INSERT INTO webapp2_pairing_requests (name, country_code, phone, email, platform, runtime, code_hash, client_ip) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))');
-                $insert->execute([$old['name'], $old['country_code'], $old['phone'], $old['email'], $old['platform'], $runtime, hash('sha256', $code), $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0']);
-                $requestId = (int)$pdo->lastInsertId();
+                $codeHash = hash('sha256', $code);
+                $existing = $pdo->prepare('SELECT status FROM webapp2_pairing_requests WHERE code_hash = ? AND platform = ? AND status = ? ORDER BY id DESC LIMIT 1');
+                $existing->execute([$codeHash, $old['platform'], 'approved']);
+                if ($existing->fetchColumn() !== false) {
+                    // OpenClaw removes an approved code from its pending queue.
+                    // Treat browser retries as idempotent success instead of
+                    // exposing the runtime's "no pending request" error.
+                    $messageType = 'success';
+                    $message = 'El emparejamiento ya había sido realizado correctamente.';
+                    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+                } else {
+                    $insert = $pdo->prepare('INSERT INTO webapp2_pairing_requests (name, country_code, phone, email, platform, runtime, code_hash, client_ip) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))');
+                    $insert->execute([$old['name'], $old['country_code'], $old['phone'], $old['email'], $old['platform'], $runtime, $codeHash, $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0']);
+                    $requestId = (int)$pdo->lastInsertId();
 
-                $execution = run_pairing($old['platform'], $code);
-                $result = substr(trim($execution['stdout'] . ($execution['stderr'] !== '' ? "\n" . $execution['stderr'] : '')), 0, 4000);
-                $ok = $execution['exit_code'] === 0 && !$execution['timed_out'];
-                $update = $pdo->prepare('UPDATE webapp2_pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
-                $update->execute([$ok ? 'approved' : 'failed', $result, $requestId]);
-                $messageType = $ok ? 'success' : 'error';
-                $message = $ok ? 'El emparejamiento se realizó correctamente.' : 'No fue posible completar el emparejamiento. Verifica el código y la plataforma.';
-                $_SESSION['csrf'] = bin2hex(random_bytes(32));
+                    $execution = run_pairing($old['platform'], $code);
+                    $result = substr(trim($execution['stdout'] . ($execution['stderr'] !== '' ? "\n" . $execution['stderr'] : '')), 0, 4000);
+                    $ok = $execution['exit_code'] === 0 && !$execution['timed_out'];
+                    $update = $pdo->prepare('UPDATE webapp2_pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
+                    $update->execute([$ok ? 'approved' : 'failed', $result, $requestId]);
+                    $messageType = $ok ? 'success' : 'error';
+                    $message = $ok ? 'El emparejamiento se realizó correctamente.' : 'No fue posible completar el emparejamiento. Verifica el código y la plataforma.';
+                    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+                }
             }
         } catch (Throwable $e) {
             error_log('webapp2 pairing error: ' . $e->getMessage());
