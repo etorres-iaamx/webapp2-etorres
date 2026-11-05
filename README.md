@@ -55,7 +55,8 @@ un evento meramente encolado no se reporta como aprobación confirmada.
 
 1. Crear la base de datos usando `schema.sql`.
 2. Crear `.env` a partir de `.env.example` con una contraseña aleatoria de MariaDB.
-3. Levantar el servidor PHP local.
+3. Levantar el servidor PHP local con `php -S 127.0.0.1:8081 -t . router.php` para
+   exponer únicamente `pa/index.php` y `pb/index.php`; no usar el docroot sin router.
 4. Cambiar el servicio Ngrok para publicar el puerto PHP bajo el dominio del runtime.
 5. Probar el formulario y los flujos de éxito, error, expiración y rate limiting.
 6. Configurar `WEBAPP2_RUNTIME`, `WEBAPP2_SSH_USER`, host/puerto SSH y la sesión
