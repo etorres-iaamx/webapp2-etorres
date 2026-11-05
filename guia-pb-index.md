@@ -306,8 +306,8 @@ El endpoint aplica las siguientes medidas:
 - Runtime, usuario SSH, binario y sesión definidos sólo en `.env`.
 - No acepta comandos arbitrarios enviados por el cliente.
 - No permite elegir el binario que se ejecutará.
-- No depende de un usuario o ruta `/home/...` fijo: SSH, usuario, binarios y sesión
-  se configuran mediante variables `WEBAPP2_*`.
+- No depende de un usuario ni de rutas del host fijas: SSH, usuario, binarios y
+  sesión se configuran mediante variables `WEBAPP2_*`.
 - El comando remoto se cita antes de enviarse por SSH para conservar correctamente
   prompts y respuestas JSON en cualquier instalación Ubuntu.
 - No muestra credenciales ni excepciones internas.
