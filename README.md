@@ -1,5 +1,11 @@
 # webapp2 Pairing Web App
 
+## Manual de instalación y operación
+
+Consulta [MANUAL-INSTALACION.md](MANUAL-INSTALACION.md) para instalar la
+aplicación en Ubuntu, configurar Hermes u OpenClaw, preparar MariaDB y SSH,
+publicar los endpoints, ejecutar las pruebas y diagnosticar errores.
+
 Aplicación PHP 8.3 para recibir solicitudes de emparejamiento de Telegram o WhatsApp.
 
 ## Estado
