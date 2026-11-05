@@ -5,7 +5,7 @@ const APP_ROOT = __DIR__;
 
 function app_env_file(): string
 {
-    return (string)(getenv('MALINALLI_ENV_FILE') ?: APP_ROOT . '/.env');
+    return (string)(getenv('WEBAPP2_ENV_FILE') ?: APP_ROOT . '/.env');
 }
 
 function app_env(string $key, string $default = ''): string
@@ -27,11 +27,11 @@ function db(): PDO
 
     $dsn = sprintf(
         'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
-        app_env('DB_HOST', '127.0.0.1'),
-        app_env('DB_PORT', '3306'),
-        app_env('DB_NAME', 'malinalli_pairing')
+        app_env('WEBAPP2_DB_HOST', '127.0.0.1'),
+        app_env('WEBAPP2_DB_PORT', '3306'),
+        app_env('WEBAPP2_DB_NAME', 'webapp2_pairing')
     );
-    $pdo = new PDO($dsn, app_env('DB_USER', 'malinalli_pairing'), app_env('DB_PASSWORD'), [
+    $pdo = new PDO($dsn, app_env('WEBAPP2_DB_USER', 'webapp2_pairing'), app_env('WEBAPP2_DB_PASSWORD'), [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,

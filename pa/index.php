@@ -40,27 +40,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         try {
             $pdo = db();
-            $stmt = $pdo->prepare('SELECT COUNT(*) FROM pairing_requests WHERE client_ip = INET6_ATON(?) AND created_at >= (NOW() - INTERVAL 15 MINUTE)');
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM webapp2_pairing_requests WHERE client_ip = INET6_ATON(?) AND created_at >= (NOW() - INTERVAL 15 MINUTE)');
             $stmt->execute([$_SERVER['REMOTE_ADDR'] ?? '0.0.0.0']);
             if ((int)$stmt->fetchColumn() >= 5) {
                 $errors[] = 'Se alcanzó el límite temporal de intentos. Intenta más tarde.';
             } else {
                 $runtime = agent_runtime();
-                $insert = $pdo->prepare('INSERT INTO pairing_requests (name, country_code, phone, email, platform, runtime, code_hash, client_ip) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))');
+                $insert = $pdo->prepare('INSERT INTO webapp2_pairing_requests (name, country_code, phone, email, platform, runtime, code_hash, client_ip) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))');
                 $insert->execute([$old['name'], $old['country_code'], $old['phone'], $old['email'], $old['platform'], $runtime, hash('sha256', $code), $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0']);
                 $requestId = (int)$pdo->lastInsertId();
 
                 $execution = run_pairing($old['platform'], $code);
                 $result = substr(trim($execution['stdout'] . ($execution['stderr'] !== '' ? "\n" . $execution['stderr'] : '')), 0, 4000);
                 $ok = $execution['exit_code'] === 0 && !$execution['timed_out'];
-                $update = $pdo->prepare('UPDATE pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
+                $update = $pdo->prepare('UPDATE webapp2_pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
                 $update->execute([$ok ? 'approved' : 'failed', $result, $requestId]);
                 $messageType = $ok ? 'success' : 'error';
                 $message = $ok ? 'El emparejamiento se realizó correctamente.' : 'No fue posible completar el emparejamiento. Verifica el código y la plataforma.';
                 $_SESSION['csrf'] = bin2hex(random_bytes(32));
             }
         } catch (Throwable $e) {
-            error_log('Malinalli pairing error: ' . $e->getMessage());
+            error_log('webapp2 pairing error: ' . $e->getMessage());
             $messageType = 'error';
             $message = 'El servicio no está disponible en este momento. Intenta más tarde.';
         }
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Emparejamiento de Malinalli</title>
+<title>Emparejamiento de webapp2</title>
 <style>
 body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f7fb;color:#172033;margin:0;padding:24px}.card{max-width:680px;margin:auto;background:#fff;padding:28px;border-radius:14px;box-shadow:0 8px 28px #1720331a}h1{margin-top:0}label{display:block;font-weight:600;margin:16px 0 6px}input,select{width:100%;box-sizing:border-box;padding:11px;border:1px solid #bbc5d4;border-radius:8px;font:inherit}button{margin-top:24px;padding:12px 20px;border:0;border-radius:8px;background:#185adb;color:#fff;font-weight:700;cursor:pointer}.notice{padding:12px;border-radius:8px;margin:16px 0}.success{background:#e5f7eb;color:#155b2c}.error{background:#fde8e8;color:#8b1e1e}.hint{color:#5e6b7e;font-size:.93rem}.platforms{display:flex;gap:20px;margin-top:8px}.platforms label{font-weight:400;margin:0}.platforms input{width:auto}
 </style>

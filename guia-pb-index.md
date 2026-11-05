@@ -2,7 +2,7 @@
 
 ## 1. Descripción general
 
-`pb/index.php` es el endpoint del **Proceso B** de la aplicación de pairing de Malinalli.
+`pb/index.php` es el endpoint del **Proceso B** de `webapp2`.
 
 Su función es recibir una solicitud estructurada desde Paynani u otro sistema autorizado, adaptar el mecanismo de entrega usado por Paynani para el runtime configurado (Hermes u OpenClaw), enviar un prompt a la sesión principal y devolver una respuesta JSON indicando si la solicitud fue aprobada o si ocurrió un error.
 
@@ -13,7 +13,7 @@ adaptador, autenticación, persistencia y correlación mediante `request_id`.
 Endpoint público:
 
 ```text
-https://malinalli-hermes.ngrok.io/pb/index.php
+https://<DOMINIO>.ngrok.io/pb/index.php
 ```
 
 El endpoint está diseñado para automatizaciones y sistemas internos. No es un formulario para usuarios finales.
@@ -36,7 +36,7 @@ El usuario captura:
 URL:
 
 ```text
-https://malinalli-hermes.ngrok.io/pa/index.php
+https://<DOMINIO>.ngrok.io/pa/index.php
 ```
 
 ### `pb/index.php`
@@ -48,7 +48,7 @@ No muestra un formulario HTML y responde exclusivamente con JSON.
 URL:
 
 ```text
-https://malinalli-hermes.ngrok.io/pb/index.php
+https://<DOMINIO>.ngrok.io/pb/index.php
 ```
 
 ## 3. Flujo del Proceso B
@@ -74,31 +74,31 @@ Paynani, webhook o sistema interno
 El endpoint requiere un token mediante el encabezado HTTP:
 
 ```http
-Authorization: Bearer PROCESS_B_TOKEN
+Authorization: Bearer WEBAPP2_PROCESS_B_TOKEN
 ```
 
 También acepta, como alternativa compatible:
 
 ```http
-X-Process-B-Token: PROCESS_B_TOKEN
+X-Process-B-Token: WEBAPP2_PROCESS_B_TOKEN
 ```
 
 El token se configura localmente en:
 
 ```text
-/home/jdiaz/.hermes/workspace/webapp2/.env
+/path/to/webapp2/.env
 ```
 
 Variable utilizada:
 
 ```env
-PROCESS_B_TOKEN=token_privado
+WEBAPP2_PROCESS_B_TOKEN=token_privado
 ```
 
 El archivo `.env` debe tener permisos restringidos:
 
 ```bash
-chmod 600 /home/jdiaz/.hermes/workspace/webapp2/.env
+chmod 600 /path/to/webapp2/.env
 ```
 
 Nunca se debe publicar el token en GitHub, HTML, logs, correo o mensajes de chat.
@@ -135,8 +135,8 @@ No utilizar el token real en documentación pública. El siguiente ejemplo usa u
 
 ```bash
 curl -X POST \
-  https://malinalli-hermes.ngrok.io/pb/index.php \
-  -H "Authorization: Bearer PROCESS_B_TOKEN" \
+  https://<DOMINIO>.ngrok.io/pb/index.php \
+  -H "Authorization: Bearer WEBAPP2_PROCESS_B_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "code": "ABC1234",
@@ -267,7 +267,7 @@ Un sistema de soporte puede recibir los datos de contacto, iniciar el pairing y 
 Para Hermes utiliza:
 
 ```env
-HERMES_SESSION=ID_DE_LA_SESION_PRINCIPAL
+WEBAPP2_HERMES_SESSION=ID_DE_LA_SESION_PRINCIPAL
 ```
 
 Cuando está configurada, el prompt se envía mediante:
@@ -281,8 +281,8 @@ La configuración actual utiliza una sesión principal de Telegram.
 Para OpenClaw utiliza:
 
 ```env
-AGENT_RUNTIME=openclaw
-OPENCLAW_SESSION_KEY=agent:main:telegram:direct:ID
+WEBAPP2_RUNTIME=openclaw
+WEBAPP2_OPENCLAW_SESSION_KEY=agent:main:telegram:direct:ID
 ```
 
 El adaptador invoca `openclaw system event --mode now --expect-final` con la
@@ -329,7 +329,7 @@ Para verificar que el endpoint rechaza un token incorrecto:
 
 ```bash
 curl -X POST \
-  https://malinalli-hermes.ngrok.io/pb/index.php \
+  https://<DOMINIO>.ngrok.io/pb/index.php \
   -H "Authorization: Bearer token-invalido" \
   -H "Content-Type: application/json" \
   -d '{}'

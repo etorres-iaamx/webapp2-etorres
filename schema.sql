@@ -1,9 +1,9 @@
-CREATE DATABASE IF NOT EXISTS malinalli_pairing
+CREATE DATABASE IF NOT EXISTS webapp2_pairing
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE malinalli_pairing;
+USE webapp2_pairing;
 
-CREATE TABLE IF NOT EXISTS pairing_requests (
+CREATE TABLE IF NOT EXISTS webapp2_pairing_requests (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(160) NOT NULL,
   country_code VARCHAR(8) NOT NULL,

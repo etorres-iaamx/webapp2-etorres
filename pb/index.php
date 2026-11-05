@@ -77,9 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(405, ['ok' => false, 'approved' => false, 'error' => 'Only POST is allowed.']);
 }
 
-$configuredToken = app_env('PROCESS_B_TOKEN');
+    $configuredToken = app_env('WEBAPP2_PROCESS_B_TOKEN');
 if ($configuredToken === '') {
-    error_log('Malinalli Process B error: PROCESS_B_TOKEN is not configured');
+    error_log('webapp2 Process B error: WEBAPP2_PROCESS_B_TOKEN is not configured');
     respond(503, ['ok' => false, 'approved' => false, 'error' => 'Process B is not configured.']);
 }
 if (!hash_equals($configuredToken, bearer_token())) {
@@ -120,17 +120,16 @@ if ($errors) {
 $requestId = null;
 try {
     $pdo = db();
-    $stmt = $pdo->prepare('SELECT COUNT(*) FROM pairing_requests WHERE client_ip = INET6_ATON(?) AND created_at >= (NOW() - INTERVAL 15 MINUTE)');
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM webapp2_pairing_requests WHERE client_ip = INET6_ATON(?) AND created_at >= (NOW() - INTERVAL 15 MINUTE)');
     $stmt->execute([$_SERVER['REMOTE_ADDR'] ?? '0.0.0.0']);
     if ((int)$stmt->fetchColumn() >= 5) {
         respond(429, ['ok' => false, 'approved' => false, 'error' => 'Too many pairing attempts.']);
     }
 
     $runtime = agent_runtime();
-    $insert = $pdo->prepare('INSERT INTO pairing_requests (name, country_code, phone, email, platform, runtime, code_hash, client_ip) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))');
+    $insert = $pdo->prepare('INSERT INTO webapp2_pairing_requests (name, country_code, phone, email, platform, runtime, code_hash, client_ip) VALUES (?, ?, ?, ?, ?, ?, ?, INET6_ATON(?))');
     $insert->execute([$name, $countryCode, $phone, $email, $platform, $runtime, hash('sha256', $code), $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0']);
     $requestId = (int)$pdo->lastInsertId();
-    $runtime = agent_runtime();
     $approvalCommand = $runtime === 'hermes'
         ? "hermes pairing approve {$platform} {$code}"
         : "openclaw pairing approve {$platform} {$code}";
@@ -174,7 +173,7 @@ PROMPT;
         'exit_code' => $execution['exit_code'],
         'timed_out' => $execution['timed_out'],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    $update = $pdo->prepare('UPDATE pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
+        $update = $pdo->prepare('UPDATE webapp2_pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
     $update->execute([$approved ? 'approved' : 'failed', substr((string)$storedOutput, 0, 4000), $requestId]);
 
     if ($approved) {
@@ -194,10 +193,10 @@ PROMPT;
         'error' => substr($error, 0, 500),
     ]);
 } catch (Throwable $e) {
-    error_log('Malinalli Process B error: ' . $e->getMessage());
+    error_log('webapp2 Process B error: ' . $e->getMessage());
     if ($requestId !== null) {
         try {
-            $update = $pdo->prepare('UPDATE pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
+            $update = $pdo->prepare('UPDATE webapp2_pairing_requests SET status = ?, command_output = ?, processed_at = NOW() WHERE id = ?');
             $update->execute(['failed', 'internal error', $requestId]);
         } catch (Throwable $ignored) {
             // Preserve the original API error and do not expose database details.

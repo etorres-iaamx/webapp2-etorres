@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 function agent_runtime(): string
 {
-    $runtime = strtolower(app_env('AGENT_RUNTIME', 'hermes'));
+    $runtime = strtolower(app_env('WEBAPP2_RUNTIME', 'hermes'));
     if (!in_array($runtime, ['hermes', 'openclaw'], true)) {
         throw new RuntimeException('Unsupported agent runtime.');
     }
@@ -14,16 +14,16 @@ function agent_runtime(): string
 
 function runtime_user(): string
 {
-    $user = app_env('AGENT_SSH_USER');
+    $user = app_env('WEBAPP2_SSH_USER');
     if ($user === '' || !preg_match('/^[A-Za-z_][A-Za-z0-9_.-]*$/', $user)) {
-        throw new RuntimeException('AGENT_SSH_USER is not configured safely.');
+        throw new RuntimeException('WEBAPP2_SSH_USER is not configured safely.');
     }
     return $user;
 }
 
 function runtime_session(): string
 {
-    $key = agent_runtime() === 'hermes' ? 'HERMES_SESSION' : 'OPENCLAW_SESSION_KEY';
+    $key = agent_runtime() === 'hermes' ? 'WEBAPP2_HERMES_SESSION' : 'WEBAPP2_OPENCLAW_SESSION_KEY';
     $session = app_env($key);
     if ($session === '' || strlen($session) > 240 || !preg_match('/^[A-Za-z0-9._:\/-]+$/', $session)) {
         throw new RuntimeException($key . ' is not configured.');
@@ -33,7 +33,7 @@ function runtime_session(): string
 
 function runtime_binary(): string
 {
-    $key = agent_runtime() === 'hermes' ? 'HERMES_BIN' : 'OPENCLAW_BIN';
+    $key = agent_runtime() === 'hermes' ? 'WEBAPP2_HERMES_BIN' : 'WEBAPP2_OPENCLAW_BIN';
     $binary = app_env($key, agent_runtime() === 'hermes' ? 'hermes' : 'openclaw');
     if (!preg_match('~^[A-Za-z0-9_./:-]+$~', $binary)) {
         throw new RuntimeException($key . ' is invalid.');
@@ -56,17 +56,17 @@ function runtime_prompt_command(string $prompt): array
 
 function run_runtime(array $command, int $timeout = 90): array
 {
-    $host = app_env('AGENT_SSH_HOST', '127.0.0.1');
-    $port = app_env('AGENT_SSH_PORT', '22');
+    $host = app_env('WEBAPP2_SSH_HOST', '127.0.0.1');
+    $port = app_env('WEBAPP2_SSH_PORT', '22');
     if (!filter_var($host, FILTER_VALIDATE_IP) && !preg_match('/^[A-Za-z0-9][A-Za-z0-9.-]*$/', $host)) {
-        throw new RuntimeException('AGENT_SSH_HOST is invalid.');
+        throw new RuntimeException('WEBAPP2_SSH_HOST is invalid.');
     }
     if (!ctype_digit($port) || (int)$port < 1 || (int)$port > 65535) {
-        throw new RuntimeException('AGENT_SSH_PORT is invalid.');
+        throw new RuntimeException('WEBAPP2_SSH_PORT is invalid.');
     }
 
     $ssh = ['/usr/bin/ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=5', '-p', $port];
-    $identity = app_env('AGENT_SSH_IDENTITY_FILE');
+    $identity = app_env('WEBAPP2_SSH_IDENTITY_FILE');
     if ($identity !== '') {
         $ssh = array_merge($ssh, ['-i', $identity]);
     }

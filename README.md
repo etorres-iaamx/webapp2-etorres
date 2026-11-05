@@ -1,4 +1,4 @@
-# Malinalli Pairing Web App (`webapp2`)
+# webapp2 Pairing Web App
 
 Aplicación PHP 8.3 para recibir solicitudes de emparejamiento de Telegram o WhatsApp.
 
@@ -33,7 +33,7 @@ devuelve un resultado correlacionado con `request_id`:
 {"ok":true,"approved":true,"request_id":"pb-123","error":null}
 ```
 
-Para proteger el endpoint se requiere `PROCESS_B_TOKEN` en el `.env` y el
+Para proteger el endpoint se requiere `WEBAPP2_PROCESS_B_TOKEN` en el `.env` y el
 cliente debe enviar `Authorization: Bearer <token>` o
 `X-Process-B-Token: <token>`. El endpoint solo acepta `POST`, aplica el mismo
 límite de cinco intentos por IP en quince minutos y utiliza SSH no interactivo
@@ -54,7 +54,7 @@ un evento meramente encolado no se reporta como aprobación confirmada.
 3. Levantar el servidor PHP local.
 4. Cambiar el servicio Ngrok para publicar el puerto PHP bajo el dominio del runtime.
 5. Probar el formulario y los flujos de éxito, error, expiración y rate limiting.
-6. Configurar `AGENT_RUNTIME`, `AGENT_SSH_USER`, host/puerto SSH y la sesión
-   principal (`HERMES_SESSION` u `OPENCLAW_SESSION_KEY`).
-7. Agregar `PROCESS_B_TOKEN` y probar `pb/index.php` con un código de laboratorio.
+6. Configurar `WEBAPP2_RUNTIME`, `WEBAPP2_SSH_USER`, host/puerto SSH y la sesión
+   principal (`WEBAPP2_HERMES_SESSION` u `WEBAPP2_OPENCLAW_SESSION_KEY`).
+7. Agregar `WEBAPP2_PROCESS_B_TOKEN` y probar `pb/index.php` con un código de laboratorio.
    No publicar el token ni usar códigos reales durante pruebas automatizadas.
