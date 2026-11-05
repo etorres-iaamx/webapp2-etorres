@@ -41,6 +41,15 @@ function runtime_binary(): string
     return $binary;
 }
 
+function ssh_binary(): string
+{
+    $binary = app_env('WEBAPP2_SSH_BIN', '/usr/bin/ssh');
+    if (!preg_match('~^/[A-Za-z0-9_./-]+$~', $binary)) {
+        throw new RuntimeException('WEBAPP2_SSH_BIN is invalid.');
+    }
+    return $binary;
+}
+
 function runtime_pairing_command(string $platform, string $code): array
 {
     return [runtime_binary(), 'pairing', 'approve', $platform, $code];
@@ -65,14 +74,19 @@ function run_runtime(array $command, int $timeout = 90): array
         throw new RuntimeException('WEBAPP2_SSH_PORT is invalid.');
     }
 
-    $ssh = ['/usr/bin/ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=5', '-p', $port];
+    $ssh = [ssh_binary(), '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=5', '-p', $port];
     $identity = app_env('WEBAPP2_SSH_IDENTITY_FILE');
     if ($identity !== '') {
         $ssh = array_merge($ssh, ['-i', $identity]);
     }
     $ssh[] = '--';
     $ssh[] = runtime_user() . '@' . $host;
-    $command = array_merge($ssh, $command);
+
+    // OpenSSH joins all arguments after the host into a remote shell command.
+    // Quote each fixed/runtime argument explicitly so prompts and JSON braces
+    // cannot be reinterpreted by that shell or truncated by whitespace.
+    $remoteCommand = implode(' ', array_map('escapeshellarg', $command));
+    $command = array_merge($ssh, [$remoteCommand]);
 
     $pipes = [];
     $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, APP_ROOT, null, ['bypass_shell' => true]);

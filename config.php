@@ -15,7 +15,13 @@ function app_env(string $key, string $default = ''): string
         $file = app_env_file();
         $values = is_file($file) ? (parse_ini_file($file, false, INI_SCANNER_RAW) ?: []) : [];
     }
-    return trim((string)($values[$key] ?? getenv($key) ?: $default));
+    // Process/service environment takes precedence, which keeps deployments
+    // portable across Ubuntu hosts, containers and systemd services.
+    $environmentValue = getenv($key);
+    if ($environmentValue !== false && $environmentValue !== '') {
+        return trim((string)$environmentValue);
+    }
+    return trim((string)($values[$key] ?? $default));
 }
 
 function db(): PDO

@@ -9,6 +9,10 @@ Aplicación PHP 8.3 para recibir solicitudes de emparejamiento de Telegram o Wha
 - La aplicación comparte validación, MariaDB, rate limiting y auditoría entre Hermes y OpenClaw.
 - El runtime se fija en `.env`; nunca se acepta desde el navegador ni desde la API.
 - Los procesos A y B se conectan por SSH en modo no interactivo a `localhost`, con argumentos fijos y `bypass_shell`.
+- El comando remoto se cita como una unidad para que prompts, JSON y espacios no
+  se rompan al atravesar el shell remoto; no depende de `/home/<usuario>` fijo.
+- Las variables `WEBAPP2_*` del entorno del servicio tienen prioridad sobre `.env`,
+  para permitir despliegues en Ubuntu, contenedores o systemd.
 - El cliente sólo aporta datos; nunca aporta un comando, binario, usuario, host o sesión.
 
 ## Proceso B: puente PHP hacia el agente principal
